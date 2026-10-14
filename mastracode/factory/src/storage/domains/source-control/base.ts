@@ -502,6 +502,11 @@ export interface SourceControlStorageHandle {
     listByOrigin(args: { orgId: string; originSessionId: string }): Promise<SourceControlSession[]>;
     /** Overwrite the session's display title. Keyed by the controller-facing `sessionId`. */
     rename(args: { sessionId: string; title: string }): Promise<void>;
+    /** Change who can see the session. Returns the updated row, or null when it does not exist. */
+    setVisibility(args: {
+      sessionId: string;
+      visibility: SourceControlSessionVisibility;
+    }): Promise<SourceControlSession | null>;
     /** Keyed by the link (today's callers) or by the factory. */
     getForBranch(args: SessionBranchKey): Promise<SourceControlSession | null>;
     create(input: CreateSourceControlSessionInput): Promise<SourceControlSession>;
@@ -1432,6 +1437,13 @@ export class SourceControlStorage extends FactoryStorageDomain {
             title,
             updated_at: new Date(),
           }));
+        },
+        setVisibility: async ({ sessionId, visibility }) => {
+          const row = await db().updateAtomic<SessionDbRow>(SESSIONS, { session_id: sessionId }, () => ({
+            visibility,
+            updated_at: new Date(),
+          }));
+          return row ? toSession(row) : null;
         },
         getForBranch: async args => {
           if ('factoryProjectId' in args) {
