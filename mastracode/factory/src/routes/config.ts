@@ -325,9 +325,20 @@ function grantingTenantRecord(records: CredentialRecord[], authProviderId: strin
   );
 }
 
-function tenantCredentialLabel(records: CredentialRecord[] | undefined, provider: string) {
-  const record = records && grantingTenantRecord(records, getAuthProviderId(provider));
-  return record && credentialLabel(provider, record.credential.type);
+type ModelCredentialHolder = 'personal' | 'organization' | 'deployment';
+
+function tenantModelCredential(
+  records: CredentialRecord[] | undefined,
+  provider: string,
+): { credentialLabel?: string; credentialHolder?: ModelCredentialHolder } {
+  if (!records) return {};
+  if (isDeploymentModelProvider(provider)) return { credentialHolder: 'deployment' };
+  const record = grantingTenantRecord(records, getAuthProviderId(provider));
+  if (!record) return {};
+  return {
+    credentialLabel: credentialLabel(provider, record.credential.type),
+    credentialHolder: record.scope === 'user' ? 'personal' : 'organization',
+  };
 }
 
 /**
@@ -984,7 +995,7 @@ export class ConfigRoutes extends Route<ConfigRoutesDeps> {
                       modelName,
                       hasApiKey: true,
                       reasoningOptions: getModelReasoningOptions(id),
-                      credentialLabel: tenantCredentialLabel(tenantCredentials, provider),
+                      ...tenantModelCredential(tenantCredentials, provider),
                     },
                   ]
                 : [],
@@ -1002,6 +1013,9 @@ export class ConfigRoutes extends Route<ConfigRoutesDeps> {
                 });
                 if (!('response' in ctx)) {
                   const known = new Set(catalog.map(m => m.id));
+                  const customProviderCredential: { credentialHolder?: ModelCredentialHolder } = tenantCredentials
+                    ? { credentialHolder: 'organization' }
+                    : {};
                   for (const record of await ctx.storage.list({ orgId: ctx.orgId })) {
                     for (const model of record.models) {
                       const id = `${record.providerId}/${model}`;
@@ -1013,7 +1027,7 @@ export class ConfigRoutes extends Route<ConfigRoutesDeps> {
                         modelName: model,
                         hasApiKey: true,
                         reasoningOptions: undefined,
-                        credentialLabel: undefined,
+                        ...customProviderCredential,
                       });
                     }
                   }
