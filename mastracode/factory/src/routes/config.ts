@@ -32,6 +32,7 @@ import type { FactoryProjectsStorage } from '../storage/domains/projects/base.js
 import type { SourceControlStorageHandle } from '../storage/domains/source-control/base.js';
 import type { WorkItemsStorage } from '../storage/domains/work-items/base.js';
 import {
+  credentialLabel,
   getAuthProviderId,
   listTenantCredentialsForRequest,
   resolveCredentialContext,
@@ -315,6 +316,14 @@ export function resolveDeploymentModelProviders(providers: readonly string[] | u
     }
   }
   return resolved;
+}
+
+function tenantCredentialLabel(records: CredentialRecord[] | undefined, provider: string) {
+  const authProviderId = getAuthProviderId(provider);
+  const record =
+    records?.find(r => r.scope === 'user' && r.provider === authProviderId) ??
+    records?.find(r => r.scope === 'org' && r.provider === authProviderId);
+  return record && credentialLabel(provider, record.credential.type);
 }
 
 /**
@@ -966,7 +975,16 @@ export class ConfigRoutes extends Route<ConfigRoutesDeps> {
             ]);
             const catalog = models.flatMap(({ id, provider, modelName }) =>
               typeof id === 'string' && canUseModelProvider(access, provider)
-                ? [{ id, provider, modelName, hasApiKey: true, reasoningOptions: getModelReasoningOptions(id) }]
+                ? [
+                    {
+                      id,
+                      provider,
+                      modelName,
+                      hasApiKey: true,
+                      reasoningOptions: getModelReasoningOptions(id),
+                      credentialLabel: tenantCredentialLabel(tenantCredentials, provider),
+                    },
+                  ]
                 : [],
             );
             // Append the caller's custom provider models (DB-backed, org rows in
@@ -993,6 +1011,7 @@ export class ConfigRoutes extends Route<ConfigRoutesDeps> {
                         modelName: model,
                         hasApiKey: true,
                         reasoningOptions: undefined,
+                        credentialLabel: undefined,
                       });
                     }
                   }
