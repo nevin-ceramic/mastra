@@ -1,5 +1,17 @@
 # @mastra/playground-ui
 
+## 65.0.0-alpha.6
+
+### Minor Changes
+
+- Added `BillingIllustration`, a family of line drawings for billing screens. It starts with the four project sizes (Serverless, Small, Medium, Large), for example as a thumbnail beside each project in a Billing projects table. It is decorative, hidden from screen readers, and works in light and dark themes. Size it with `className`, and use `tone="muted"` or `tone="faded"` for a quieter drawing. ([#27694](https://github.com/mastra-ai/mastra/pull/27694))
+
+  ```tsx
+  import { BillingIllustration } from '@mastra/playground-ui/components/BillingIllustration';
+
+  <BillingIllustration name="medium" className="size-9" />;
+  ```
+
 ## 65.0.0-alpha.5
 
 ### Minor Changes
