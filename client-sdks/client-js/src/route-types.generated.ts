@@ -2351,6 +2351,8 @@ type Shared_Type_6 = {
   modelVersion?: string | undefined;
   supportsMemory?: boolean | undefined;
   modelList?: Shared_Type_2[] | undefined;
+  /** False when the model list comes from a function and cannot be reordered or edited */
+  modelListEditable?: boolean | undefined;
   /** Default options for agent execution */
   defaultOptions?: Shared_Type_5 | undefined;
   defaultGenerateOptionsLegacy?:
@@ -3722,6 +3724,8 @@ type Shared_Type_67 = {
   traceQueryContextIds: boolean;
   /** `timeToFirstChunkMs` in trace and span query results, and predicates on it in trace, thread and span queries */
   traceQueryTimeToFirstChunk: boolean;
+  /** Root span `name` and `spanType` in trace-scope predicates, aggregate `groupBy` and `countDistinct` */
+  traceQueryRootSpanFields: boolean;
   /** Trace query field discovery (POST /observability/traces/query/fields and /values) */
   traceQueryDiscovery: boolean;
   /** Trusted tenant scoping of trace and thread queries */
